@@ -4,6 +4,8 @@ import { WeeklyActivityLog, RecruitmentType } from '../../types';
 import {
   generateSettlementCsv,
   generateStudentSummaryCsv,
+  generateMenteeMileageCsv,
+  generateMentorDisbursementCsv,
   downloadCsvFile,
   calculateSettlementTotal,
 } from '../../utils/settlementExport';
@@ -133,23 +135,23 @@ export const AdminDashboard: React.FC = () => {
   );
 
   const handleDownloadMentorOnlyCsv = () => {
-    const csvData = generateStudentSummaryCsv(mentorSummaries);
+    const csvData = generateMentorDisbursementCsv(mentorSummaries);
     const dateStr = new Date().toISOString().slice(0, 10);
     const semName = selectedSemester === 'ALL' ? '전체학기' : `${selectedSemester}학기`;
     downloadCsvFile(csvData, `SWIC_회계품의_멘토_장학금총괄표_${semName}_${dateStr}.csv`);
     setDownloadSuccessMessage(
-      `[멘토 활동비 품의 총괄표] ${semName} (${mentorSummaries.length}명, ${roleTotals.totalMentorScholarship.toLocaleString()}원) 파일이 다운로드되었습니다.`
+      `[멘토 활동비 품의 총괄표] ${semName} (${mentorSummaries.length}명, ${roleTotals.totalMentorScholarship.toLocaleString()}원, 계좌정보 포함) 파일이 다운로드되었습니다.`
     );
     setTimeout(() => setDownloadSuccessMessage(null), 4000);
   };
 
   const handleDownloadMenteeOnlyCsv = () => {
-    const csvData = generateStudentSummaryCsv(menteeSummaries);
+    const csvData = generateMenteeMileageCsv(menteeSummaries);
     const dateStr = new Date().toISOString().slice(0, 10);
     const semName = selectedSemester === 'ALL' ? '전체학기' : `${selectedSemester}학기`;
-    downloadCsvFile(csvData, `SWIC_웨일비_멘티_마일리지총괄표_${semName}_${dateStr}.csv`);
+    downloadCsvFile(csvData, `SWIC_교육혁신원_멘티_마일리지등록_${semName}_${dateStr}.csv`);
     setDownloadSuccessMessage(
-      `[멘티 마일리지 총괄표] ${semName} (${menteeSummaries.length}명, ${roleTotals.totalMenteeMileage}P) 파일이 다운로드되었습니다.`
+      `[교육혁신원 멘티 마일리지 등록표] ${semName} (${menteeSummaries.length}명, ${roleTotals.totalMenteeMileage}P, 불필요한 계좌 제외) 파일이 다운로드되었습니다.`
     );
     setTimeout(() => setDownloadSuccessMessage(null), 4000);
   };
@@ -770,7 +772,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          {/* SECTION 2: 참여 멘티 비교과 마일리지(웨일비) 적립 명단 */}
+          {/* SECTION 2: 참여 멘티 비교과 마일리지(교육혁신원) 적립 명단 */}
           {(userRoleFilter === 'ALL' || userRoleFilter === 'MENTEE') && (
             <div className="bg-white rounded-2xl border border-indigo-200/80 shadow-xs overflow-hidden">
               <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-50/80 via-white to-purple-50/30 border-b border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -781,14 +783,14 @@ export const AdminDashboard: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-sm sm:text-base text-slate-900">
-                        참여 멘티 명단 (비교과 마일리지·웨일비 연계 대상)
+                        참여 멘티 명단 (비교과 마일리지·교육혁신원 등록 대상)
                       </h4>
                       <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-100 text-indigo-800 border border-indigo-200">
                         {menteeSummaries.length}명
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      부여 기준: 회차당 10점(P) 적립 · 부경대학교 비교과 통합플랫폼(Whalebee) 일괄 등록 서식
+                      부여 기준: 회차당 10점(P) 적립 · 교육혁신원 자체 비교과 마일리지 일괄 등록 서식 (불필요한 금융 계좌정보 제외)
                     </p>
                   </div>
                 </div>
@@ -804,9 +806,10 @@ export const AdminDashboard: React.FC = () => {
                     type="button"
                     onClick={handleDownloadMenteeOnlyCsv}
                     className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                    title="교육혁신원 마일리지 일괄 등록 서식 다운로드 (계좌번호 제외)"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>마일리지 엑셀</span>
+                    <span>혁신원 마일리지 엑셀</span>
                   </button>
                 </div>
               </div>
@@ -823,16 +826,14 @@ export const AdminDashboard: React.FC = () => {
                       <th className="p-3.5 text-center">출석 회차</th>
                       <th className="p-3.5 text-center">누적 학습시간</th>
                       <th className="p-3.5 text-center">출석률</th>
-                      <th className="p-3.5 text-right text-indigo-900 font-bold">웨일비 마일리지 (P)</th>
-                      <th className="p-3.5">입금 은행</th>
-                      <th className="p-3.5">계좌번호</th>
-                      <th className="p-3.5 text-center">수료 판정</th>
+                      <th className="p-3.5 text-right text-indigo-900 font-bold">혁신원 마일리지 (P)</th>
+                      <th className="p-3.5 text-center">80% 수료 판정</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
                     {menteeSummaries.length === 0 ? (
                       <tr>
-                        <td colSpan={12} className="p-8 text-center text-slate-400">
+                        <td colSpan={10} className="p-8 text-center text-slate-400">
                           조회된 멘티 데이터가 없습니다.
                         </td>
                       </tr>
@@ -866,8 +867,6 @@ export const AdminDashboard: React.FC = () => {
                           <td className="p-3.5 text-right font-extrabold text-indigo-700">
                             {st.totalSettlement}P
                           </td>
-                          <td className="p-3.5 font-semibold text-slate-700">{st.bankName || '부산은행'}</td>
-                          <td className="p-3.5 font-mono text-xs text-slate-600">{st.accountNumber}</td>
                           <td className="p-3.5 text-center">
                             {st.attendanceRate >= 80 ? (
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
@@ -1093,14 +1092,26 @@ export const AdminDashboard: React.FC = () => {
                             ? `${s.totalSettlement.toLocaleString()}원`
                             : `${s.totalSettlement}P`}
                         </td>
-                        <td className="p-3 font-semibold text-slate-700">{s.bankName || '부산은행'}</td>
+                        <td className="p-3 font-semibold text-slate-700">
+                          {s.role === 'MENTOR' ? (s.bankName || '부산은행') : '-'}
+                        </td>
                         <td className="p-3 font-mono text-[11px] text-slate-600">
-                          {s.accountNumber || '112-2104-5678-01'}
+                          {s.role === 'MENTOR' ? (s.accountNumber || '112-2104-5678-01') : '-'}
                         </td>
                         <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            지급적격
-                          </span>
+                          {s.role === 'MENTOR' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                              지급적격
+                            </span>
+                          ) : s.attendanceRate >= 80 ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              80% 수료
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                              이수중
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -1167,8 +1178,12 @@ export const AdminDashboard: React.FC = () => {
                             ? `${r.settlementAmount.toLocaleString()}원`
                             : `${r.settlementAmount}점`}
                         </td>
-                        <td className="p-3 font-semibold text-slate-700">{r.bankName || '부산은행'}</td>
-                        <td className="p-3 font-mono text-[11px] text-slate-600">{r.accountNumber || '112-2104-5678-01'}</td>
+                        <td className="p-3 font-semibold text-slate-700">
+                          {r.role === 'MENTOR' ? (r.bankName || '부산은행') : '-'}
+                        </td>
+                        <td className="p-3 font-mono text-[11px] text-slate-600">
+                          {r.role === 'MENTOR' ? (r.accountNumber || '112-2104-5678-01') : '-'}
+                        </td>
                       </tr>
                     ))
                   )}
