@@ -3,6 +3,7 @@ import { useMentoring } from '../../context/MentoringContext';
 import { WeeklyActivityLog, RecruitmentType } from '../../types';
 import {
   generateSettlementCsv,
+  generateStudentSummaryCsv,
   downloadCsvFile,
   calculateSettlementTotal,
 } from '../../utils/settlementExport';
@@ -56,7 +57,8 @@ export const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [selectedLog, setSelectedLog] = useState<WeeklyActivityLog | null>(null);
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
+  const [settlementSubTab, setSettlementSubTab] = useState<'SUMMARY' | 'LOGS'>('SUMMARY');
 
   // Available semesters dynamically collected from data
   const availableSemesters = useMemo(() => {
@@ -112,13 +114,26 @@ export const AdminDashboard: React.FC = () => {
 
   const totals = calculateSettlementTotal(filteredSettlementRecords);
 
-  const handleDownloadCsv = () => {
+  const handleDownloadSummaryCsv = () => {
+    const csvData = generateStudentSummaryCsv(studentSummaries);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const semName = selectedSemester === 'ALL' ? '전체학기' : `${selectedSemester}학기`;
+    downloadCsvFile(csvData, `SWIC_회계품의_학생별_정산총괄표_${semName}_${dateStr}.csv`);
+    setDownloadSuccessMessage(
+      `[회계 품의용 학생별 총괄표] ${semName} 파일이 UTF-8 BOM(1인 1행, 순수 숫자 계산 가능)으로 다운로드되었습니다.`
+    );
+    setTimeout(() => setDownloadSuccessMessage(null), 4000);
+  };
+
+  const handleDownloadAuditLogCsv = () => {
     const csvData = generateSettlementCsv(filteredSettlementRecords);
     const dateStr = new Date().toISOString().slice(0, 10);
     const semName = selectedSemester === 'ALL' ? '전체학기' : `${selectedSemester}학기`;
-    downloadCsvFile(csvData, `SWIC_멘토링_정산품의서_${semName}_${dateStr}.csv`);
-    setDownloadSuccess(true);
-    setTimeout(() => setDownloadSuccess(false), 3000);
+    downloadCsvFile(csvData, `SWIC_감사증빙_주차별_상세내역_${semName}_${dateStr}.csv`);
+    setDownloadSuccessMessage(
+      `[감사 증빙용 주차별 상세내역] ${semName} 파일이 UTF-8 BOM(국비 감사 대조용)으로 다운로드되었습니다.`
+    );
+    setTimeout(() => setDownloadSuccessMessage(null), 4000);
   };
 
   return (
@@ -143,20 +158,32 @@ export const AdminDashboard: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={handleDownloadCsv}
-            className="self-start md:self-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2 transition-all"
-          >
-            <Download className="w-4 h-4" />
-            <span>선택 학기 엑셀(CSV) 다운로드</span>
-          </button>
+          {/* Dedicated Dual Download Buttons (Option A) */}
+          <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+            <button
+              onClick={handleDownloadSummaryCsv}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2 transition-all"
+              title="회계 품의 및 은행 계좌 이체용 (1인 1행, 순수 숫자 계산 가능)"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>회계 품의용 총괄표 (엑셀)</span>
+            </button>
+            <button
+              onClick={handleDownloadAuditLogCsv}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all"
+              title="국비 감사 증빙용 주차별 출석 및 활동 일지 상세내역"
+            >
+              <Download className="w-4 h-4" />
+              <span>감사 증빙용 상세내역 (엑셀)</span>
+            </button>
+          </div>
         </div>
 
-        {downloadSuccess && (
+        {downloadSuccessMessage && (
           <div className="mt-3 p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-emerald-200 text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              <strong>다운로드 성공:</strong> {selectedSemester}학기 기준 정산 품의서가 UTF-8 BOM 인코딩으로 저장되었습니다.
+              <strong>다운로드 성공:</strong> {downloadSuccessMessage}
             </span>
           </div>
         )}
@@ -609,74 +636,212 @@ export const AdminDashboard: React.FC = () => {
                 마일리지({totals.totalMenteeMileage}P) 품의 서식을 다운로드합니다.
               </p>
             </div>
-            <button
-              onClick={handleDownloadCsv}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>선택 학기 엑셀 다운로드 (.csv)</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleDownloadSummaryCsv}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                title="대학 회계 품의 및 은행 펌뱅킹 이체용 (1인 1행, 순수 숫자 계산 가능)"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>회계 품의용 총괄표 (.csv)</span>
+              </button>
+              <button
+                onClick={handleDownloadAuditLogCsv}
+                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                title="국비 감사 증빙용 주차별 출석 및 활동 일지 상세내역"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>감사 증빙용 상세내역 (.csv)</span>
+              </button>
+            </div>
           </div>
 
+          {/* Sub Tab Switcher (Option A: 2원화 실시간 뷰 전환) */}
+          <div className="bg-slate-50 px-5 py-2.5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="inline-flex items-center p-1 bg-slate-200/60 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setSettlementSubTab('SUMMARY')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  settlementSubTab === 'SUMMARY'
+                    ? 'bg-white text-emerald-800 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                1. 학생별 최종 정산 총괄표 ({studentSummaries.length}명)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettlementSubTab('LOGS')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  settlementSubTab === 'LOGS'
+                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                2. 주차별 감사 상세내역 ({filteredSettlementRecords.length}건)
+              </button>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">
+              {settlementSubTab === 'SUMMARY'
+                ? '대학 행정·회계 지출결의(KORUS) 복사 및 엑셀 수식(=SUM) 즉시 계산 서식'
+                : 'IITP / SW중심대학 국비 감사 대비 주차별 증빙 로그 서식'}
+            </span>
+          </div>
+
+          {/* Table Container */}
           <div className="overflow-x-auto max-h-96">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
-                <tr>
-                  <th className="p-3">학번</th>
-                  <th className="p-3">이름</th>
-                  <th className="p-3">학과</th>
-                  <th className="p-3">역할</th>
-                  <th className="p-3">멘토링팀명</th>
-                  <th className="p-3">학기</th>
-                  <th className="p-3">회차</th>
-                  <th className="p-3">활동일자</th>
-                  <th className="p-3">시간</th>
-                  <th className="p-3">출석</th>
-                  <th className="p-3 text-right">지급액/마일리지</th>
-                  <th className="p-3">입금은행</th>
-                  <th className="p-3">계좌번호</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-600">
-                {filteredSettlementRecords.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50">
-                    <td className="p-3 font-mono">{r.studentId}</td>
-                    <td className="p-3 font-bold text-slate-800">{r.name}</td>
-                    <td className="p-3">{r.department}</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          r.role === 'MENTOR'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {r.role === 'MENTOR' ? '멘토' : '멘티'}
-                      </span>
-                    </td>
-                    <td className="p-3 font-medium text-slate-800">{r.mentoringTitle}</td>
-                    <td className="p-3 text-slate-500">{r.semester}학기</td>
-                    <td className="p-3">{r.week}주차</td>
-                    <td className="p-3 text-slate-400">{r.activityDate}</td>
-                    <td className="p-3">{r.durationHours}h</td>
-                    <td className="p-3">
-                      {r.attended ? (
-                        <span className="text-emerald-600 font-semibold">참석</span>
-                      ) : (
-                        <span className="text-rose-500 font-semibold">결석</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-right font-bold text-slate-900">
-                      {r.role === 'MENTOR'
-                        ? `${r.settlementAmount.toLocaleString()}원`
-                        : `${r.settlementAmount}점`}
-                    </td>
-                    <td className="p-3 font-semibold text-slate-700">{r.bankName || '부산은행'}</td>
-                    <td className="p-3 font-mono text-[11px] text-slate-600">{r.accountNumber || '112-2104-5678-01'}</td>
+            {settlementSubTab === 'SUMMARY' ? (
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
+                  <tr>
+                    <th className="p-3">학번</th>
+                    <th className="p-3">이름</th>
+                    <th className="p-3">학과</th>
+                    <th className="p-3">역할</th>
+                    <th className="p-3">멘토링팀명</th>
+                    <th className="p-3">학기</th>
+                    <th className="p-3 text-center">회차(출석/총)</th>
+                    <th className="p-3 text-center">출석률</th>
+                    <th className="p-3 text-right">총 인정시간</th>
+                    <th className="p-3 text-right">지급총액 / 마일리지</th>
+                    <th className="p-3">입금은행</th>
+                    <th className="p-3">계좌번호</th>
+                    <th className="p-3 text-center">적격여부</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600">
+                  {studentSummaries.length === 0 ? (
+                    <tr>
+                      <td colSpan={13} className="p-8 text-center text-slate-400">
+                        조회된 학생 정산 데이터가 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    studentSummaries.map((s, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="p-3 font-mono font-semibold text-slate-900">{s.studentId}</td>
+                        <td className="p-3 font-bold text-slate-900">{s.name}</td>
+                        <td className="p-3">{s.department}</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              s.role === 'MENTOR'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {s.role === 'MENTOR' ? '멘토' : '멘티'}
+                          </span>
+                        </td>
+                        <td className="p-3 font-medium text-slate-800">{s.mentoringTitle}</td>
+                        <td className="p-3 text-slate-500">{s.semester || '2026-1'}학기</td>
+                        <td className="p-3 text-center">
+                          {s.attendedSessions} / {s.totalSessions}회
+                        </td>
+                        <td className="p-3 text-center font-semibold">
+                          <span
+                            className={
+                              s.attendanceRate >= 80
+                                ? 'text-emerald-600'
+                                : s.attendanceRate >= 60
+                                ? 'text-amber-600'
+                                : 'text-rose-500'
+                            }
+                          >
+                            {s.attendanceRate}%
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-slate-900">
+                          {s.totalHours}시간
+                        </td>
+                        <td className="p-3 text-right font-bold text-emerald-700">
+                          {s.role === 'MENTOR'
+                            ? `${s.totalSettlement.toLocaleString()}원`
+                            : `${s.totalSettlement}P`}
+                        </td>
+                        <td className="p-3 font-semibold text-slate-700">{s.bankName || '부산은행'}</td>
+                        <td className="p-3 font-mono text-[11px] text-slate-600">
+                          {s.accountNumber || '112-2104-5678-01'}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            지급적격
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
+                  <tr>
+                    <th className="p-3">학번</th>
+                    <th className="p-3">이름</th>
+                    <th className="p-3">학과</th>
+                    <th className="p-3">역할</th>
+                    <th className="p-3">멘토링팀명</th>
+                    <th className="p-3">학기</th>
+                    <th className="p-3">회차</th>
+                    <th className="p-3">활동일자</th>
+                    <th className="p-3">시간</th>
+                    <th className="p-3">출석</th>
+                    <th className="p-3 text-right">지급액/마일리지</th>
+                    <th className="p-3">입금은행</th>
+                    <th className="p-3">계좌번호</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-600">
+                  {filteredSettlementRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={13} className="p-8 text-center text-slate-400">
+                        조회된 감사 상세 내역이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredSettlementRecords.map((r, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="p-3 font-mono">{r.studentId}</td>
+                        <td className="p-3 font-bold text-slate-800">{r.name}</td>
+                        <td className="p-3">{r.department}</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              r.role === 'MENTOR'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {r.role === 'MENTOR' ? '멘토' : '멘티'}
+                          </span>
+                        </td>
+                        <td className="p-3 font-medium text-slate-800">{r.mentoringTitle}</td>
+                        <td className="p-3 text-slate-500">{r.semester}학기</td>
+                        <td className="p-3">{r.week}주차</td>
+                        <td className="p-3 text-slate-400">{r.activityDate}</td>
+                        <td className="p-3">{r.durationHours}h</td>
+                        <td className="p-3">
+                          {r.attended ? (
+                            <span className="text-emerald-600 font-semibold">참석</span>
+                          ) : (
+                            <span className="text-rose-500 font-semibold">결석</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right font-bold text-slate-900">
+                          {r.role === 'MENTOR'
+                            ? `${r.settlementAmount.toLocaleString()}원`
+                            : `${r.settlementAmount}점`}
+                        </td>
+                        <td className="p-3 font-semibold text-slate-700">{r.bankName || '부산은행'}</td>
+                        <td className="p-3 font-mono text-[11px] text-slate-600">{r.accountNumber || '112-2104-5678-01'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

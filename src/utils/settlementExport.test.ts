@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { generateSettlementCsv, calculateSettlementTotal } from './settlementExport';
-import { AdminSettlementRecord } from '../types';
+import {
+  generateSettlementCsv,
+  generateStudentSummaryCsv,
+  calculateSettlementTotal,
+} from './settlementExport';
+import { AdminSettlementRecord, StudentUserSummary } from '../types';
 
 describe('Settlement CSV Export (TDD Red -> Green)', () => {
   const sampleRecords: AdminSettlementRecord[] = [
@@ -54,26 +58,60 @@ describe('Settlement CSV Export (TDD Red -> Green)', () => {
     },
   ];
 
+  const sampleSummaries: StudentUserSummary[] = [
+    {
+      studentId: '20241234',
+      name: '이명준',
+      department: '컴퓨터·인공지능공학부',
+      role: 'MENTOR',
+      mentoringTitle: 'PKNU 알고리즘 중급/실전',
+      semester: '2026-1',
+      totalHours: 8,
+      attendedSessions: 4,
+      totalSessions: 4,
+      attendanceRate: 100,
+      totalSettlement: 120000,
+      bankName: '부산은행',
+      accountNumber: '112-2104-5678-01',
+    },
+    {
+      studentId: '20269999',
+      name: '김멘티',
+      department: '인공지능공학과',
+      role: 'MENTEE',
+      mentoringTitle: '1학년 알고리즘 기초 멘토링 (NAN)',
+      semester: '2025-1',
+      totalHours: 4,
+      attendedSessions: 2,
+      totalSessions: 2,
+      attendanceRate: 100,
+      totalSettlement: 20,
+      bankName: '국민은행',
+      accountNumber: '942801-04-123456',
+    },
+  ];
+
   it('should include UTF-8 BOM at the beginning to prevent Excel Korean encoding corruption', () => {
     const csv = generateSettlementCsv(sampleRecords);
     expect(csv.startsWith('\uFEFF')).toBe(true);
   });
 
-  it('should generate official administrative column headers with bank and account number', () => {
+  it('should generate official administrative column headers with pure number label indicators', () => {
     const csv = generateSettlementCsv(sampleRecords);
     const lines = csv.split('\n');
     const headerLine = lines[0].replace('\uFEFF', '');
     expect(headerLine).toBe(
-      '학번,이름,학과,역할,멘토링팀명,학기,회차(주차),활동일자,활동시간(h),참석여부,지급예정액/마일리지,입금은행,계좌번호,승인상태'
+      '학번,이름,학과,역할,멘토링팀명,학기,회차(주차),활동일자,활동시간(h),참석여부,지급예정액(원)/마일리지(P),입금은행,계좌번호,승인상태'
     );
   });
 
-  it('should format data rows correctly with bank account numbers included', () => {
+  it('should format data rows correctly with pure numbers for duration and amount to enable Excel =SUM formulas', () => {
     const csv = generateSettlementCsv(sampleRecords);
     const lines = csv.split('\n');
     expect(lines.length).toBe(4);
-    expect(lines[1]).toContain(
-      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4주차,2026-04-10,2시간,참석,30000원,부산은행,112-2104-5678-01,승인'
+    // Notice: pure numbers '2' and '30000' (no '시간', '원' text suffix in numeric cells)
+    expect(lines[1]).toBe(
+      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4주차,2026-04-10,2,참석,30000,부산은행,112-2104-5678-01,승인'
     );
   });
 
@@ -81,5 +119,19 @@ describe('Settlement CSV Export (TDD Red -> Green)', () => {
     const totals = calculateSettlementTotal(sampleRecords);
     expect(totals.totalMentorScholarship).toBe(60000); // 30,000 + 30,000
     expect(totals.totalMenteeMileage).toBe(10);
+  });
+
+  it('should generate student summary CSV (1 row per student) with pure numbers for official accounting disbursement', () => {
+    const csv = generateStudentSummaryCsv(sampleSummaries);
+    expect(csv.startsWith('\uFEFF')).toBe(true);
+    const lines = csv.split('\n');
+    expect(lines[0].replace('\uFEFF', '')).toBe(
+      '학번,이름,학과,역할,멘토링팀명,학기,총회차,출석회차,출석률(%),총인정시간(h),지급총액(원)/마일리지(P),입금은행,계좌번호,정산적격여부'
+    );
+    expect(lines.length).toBe(3);
+    // Row 1: 1 student 1 row, pure numbers for calculation
+    expect(lines[1]).toBe(
+      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4,4,100,8,120000,부산은행,112-2104-5678-01,지급적격'
+    );
   });
 });
