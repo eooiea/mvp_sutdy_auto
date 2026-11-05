@@ -273,3 +273,54 @@ export function getStudentParticipations(
 
   return result;
 }
+
+/**
+ * Filters student user summaries by role ('ALL' | 'MENTOR' | 'MENTEE')
+ */
+export function filterStudentSummariesByRole(
+  summaries: StudentUserSummary[],
+  role: 'ALL' | 'MENTOR' | 'MENTEE'
+): StudentUserSummary[] {
+  if (role === 'ALL') return summaries;
+  return summaries.filter((s) => s.role === role);
+}
+
+/**
+ * Calculates role-specific totals for administrative reporting
+ */
+export function calculateRoleTotals(summaries: StudentUserSummary[]): {
+  mentorCount: number;
+  menteeCount: number;
+  totalMentorHours: number;
+  totalMenteeHours: number;
+  totalMentorScholarship: number;
+  totalMenteeMileage: number;
+} {
+  let mentorCount = 0;
+  let menteeCount = 0;
+  let totalMentorHours = 0;
+  let totalMenteeHours = 0;
+  let totalMentorScholarship = 0;
+  let totalMenteeMileage = 0;
+
+  summaries.forEach((s) => {
+    if (s.role === 'MENTOR') {
+      mentorCount += 1;
+      totalMentorHours += s.totalHours;
+      totalMentorScholarship += s.totalSettlement;
+    } else {
+      menteeCount += 1;
+      totalMenteeHours += s.totalHours;
+      totalMenteeMileage += s.totalSettlement;
+    }
+  });
+
+  return {
+    mentorCount,
+    menteeCount,
+    totalMentorHours,
+    totalMenteeHours,
+    totalMentorScholarship,
+    totalMenteeMileage,
+  };
+}

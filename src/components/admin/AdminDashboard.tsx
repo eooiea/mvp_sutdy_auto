@@ -11,6 +11,8 @@ import {
   generateStudentSummaries,
   filterSettlementRecords,
   filterPrograms,
+  filterStudentSummariesByRole,
+  calculateRoleTotals,
 } from '../../utils/adminAnalytics';
 import { calculateSubmissionRate } from '../../utils/statusTransition';
 import {
@@ -59,6 +61,8 @@ export const AdminDashboard: React.FC = () => {
   const [selectedLog, setSelectedLog] = useState<WeeklyActivityLog | null>(null);
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
   const [settlementSubTab, setSettlementSubTab] = useState<'SUMMARY' | 'LOGS'>('SUMMARY');
+  const [userRoleFilter, setUserRoleFilter] = useState<'ALL' | 'MENTOR' | 'MENTEE'>('ALL');
+  const [settlementRoleFilter, setSettlementRoleFilter] = useState<'ALL' | 'MENTOR' | 'MENTEE'>('ALL');
 
   // Available semesters dynamically collected from data
   const availableSemesters = useMemo(() => {
@@ -113,6 +117,42 @@ export const AdminDashboard: React.FC = () => {
   });
 
   const totals = calculateSettlementTotal(filteredSettlementRecords);
+
+  // Split into mentors and mentees
+  const mentorSummaries = useMemo(
+    () => studentSummaries.filter((s) => s.role === 'MENTOR'),
+    [studentSummaries]
+  );
+  const menteeSummaries = useMemo(
+    () => studentSummaries.filter((s) => s.role === 'MENTEE'),
+    [studentSummaries]
+  );
+  const roleTotals = useMemo(
+    () => calculateRoleTotals(studentSummaries),
+    [studentSummaries]
+  );
+
+  const handleDownloadMentorOnlyCsv = () => {
+    const csvData = generateStudentSummaryCsv(mentorSummaries);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const semName = selectedSemester === 'ALL' ? '전체학기' : `${selectedSemester}학기`;
+    downloadCsvFile(csvData, `SWIC_회계품의_멘토_장학금총괄표_${semName}_${dateStr}.csv`);
+    setDownloadSuccessMessage(
+      `[멘토 활동비 품의 총괄표] ${semName} (${mentorSummaries.length}명, ${roleTotals.totalMentorScholarship.toLocaleString()}원) 파일이 다운로드되었습니다.`
+    );
+    setTimeout(() => setDownloadSuccessMessage(null), 4000);
+  };
+
+  const handleDownloadMenteeOnlyCsv = () => {
+    const csvData = generateStudentSummaryCsv(menteeSummaries);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const semName = selectedSemester === 'ALL' ? '전체학기' : `${selectedSemester}학기`;
+    downloadCsvFile(csvData, `SWIC_웨일비_멘티_마일리지총괄표_${semName}_${dateStr}.csv`);
+    setDownloadSuccessMessage(
+      `[멘티 마일리지 총괄표] ${semName} (${menteeSummaries.length}명, ${roleTotals.totalMenteeMileage}P) 파일이 다운로드되었습니다.`
+    );
+    setTimeout(() => setDownloadSuccessMessage(null), 4000);
+  };
 
   const handleDownloadSummaryCsv = () => {
     const csvData = generateStudentSummaryCsv(studentSummaries);
@@ -543,79 +583,310 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* VIEW 2: 사용자(학생)별 활동·출석 이력 */}
+      {/* VIEW 2: 사용자(학생)별 활동·출석 이력 (멘토/멘티 완벽 분리 뷰) */}
       {adminViewMode === 'BY_USER' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-blue-600" />
-                <span>참여 학생(사용자)별 영구 누적 데이터 조회</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                프로그램이 종료되어도 학생들의 수료 내역, 출석률, 활동시간, 마일리지가 휘발되지 않고 인적 자산으로 보존됩니다.
-              </p>
+        <div className="space-y-5">
+          {/* Top Control & Role Segmented Tabs */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-blue-600" />
+                  <span>참여 학생(사용자)별 영구 누적 데이터 조회</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  멘토(장학금·활동비 지급 대상)와 멘티(비교과 마일리지 적립 대상)를 명확히 분리하여 대학 행정 품의 및 웨일비/KORUS 등록을 지원합니다.
+                </p>
+              </div>
+
+              {/* Dedicated Role-specific Export Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadMentorOnlyCsv}
+                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                  title="멘토 장학금·활동비 품의용 엑셀 다운로드 (순수 숫자)"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>멘토 품의표 ({mentorSummaries.length}명)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadMenteeOnlyCsv}
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                  title="멘티 비교과 마일리지 웨일비 등록용 엑셀 다운로드 (순수 숫자)"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>멘티 마일리지표 ({menteeSummaries.length}명)</span>
+                </button>
+              </div>
             </div>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
-              총 {studentSummaries.length}명 집계
-            </span>
+
+            {/* Role Filter Tabs (Segmented Control) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+              <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('ALL')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    userRoleFilter === 'ALL'
+                      ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  전체 분리 보기 ({studentSummaries.length}명)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('MENTOR')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    userRoleFilter === 'MENTOR'
+                      ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  멘토만 보기 ({mentorSummaries.length}명 · {roleTotals.totalMentorScholarship.toLocaleString()}원)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('MENTEE')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    userRoleFilter === 'MENTEE'
+                      ? 'bg-indigo-600 text-white shadow-2xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  멘티만 보기 ({menteeSummaries.length}명 · {roleTotals.totalMenteeMileage}P)
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                <span>멘토 활동비 합계: <strong className="text-blue-700">{roleTotals.totalMentorScholarship.toLocaleString()}원</strong></span>
+                <span className="text-slate-300">|</span>
+                <span>멘티 마일리지 합계: <strong className="text-indigo-700">{roleTotals.totalMenteeMileage}P</strong></span>
+              </div>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
-                  <th className="p-3.5">학번</th>
-                  <th className="p-3.5">이름</th>
-                  <th className="p-3.5">학과</th>
-                  <th className="p-3.5">역할</th>
-                  <th className="p-3.5">소속 멘토링 프로그램</th>
-                  <th className="p-3.5">학기</th>
-                  <th className="p-3.5 text-center">누적 활동시간</th>
-                  <th className="p-3.5 text-center">출석률</th>
-                  <th className="p-3.5 text-right">정산/마일리지 누적</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {studentSummaries.map((st, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="p-3.5 font-mono text-slate-500">{st.studentId}</td>
-                    <td className="p-3.5 font-bold text-slate-900">{st.name}</td>
-                    <td className="p-3.5">{st.department}</td>
-                    <td className="p-3.5">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          st.role === 'MENTOR'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {st.role === 'MENTOR' ? '멘토' : '멘티'}
+          {/* SECTION 1: 책임 멘토 장학금/활동비 지급 명단 */}
+          {(userRoleFilter === 'ALL' || userRoleFilter === 'MENTOR') && (
+            <div className="bg-white rounded-2xl border border-blue-200/80 shadow-xs overflow-hidden">
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/40 border-b border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    멘토
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900">
+                        책임 멘토 명단 (장학금·활동비 지급 대상)
+                      </h4>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        {mentorSummaries.length}명
                       </span>
-                    </td>
-                    <td className="p-3.5 font-medium text-slate-800">{st.mentoringTitle}</td>
-                    <td className="p-3.5 text-slate-500">{st.semester}학기</td>
-                    <td className="p-3.5 text-center font-bold text-slate-900">
-                      {st.totalHours}시간
-                    </td>
-                    <td className="p-3.5 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-bold text-slate-800">{st.attendanceRate}%</span>
-                        <span className="text-[11px] text-slate-400">
-                          ({st.attendedSessions}/{st.totalSessions}회)
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-3.5 text-right font-extrabold text-slate-900">
-                      {st.role === 'MENTOR'
-                        ? `${st.totalSettlement.toLocaleString()}원`
-                        : `${st.totalSettlement}점`}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      지급 기준: 시급 {hourlyRate.toLocaleString()}원 · 인정 시간 기준 KORUS 지출결의 서식
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-start sm:self-auto">
+                  <div className="text-right text-xs">
+                    <span className="text-slate-400 block text-[11px]">총 인정시간 / 지급총액</span>
+                    <strong className="text-blue-900 font-extrabold">
+                      {roleTotals.totalMentorHours}시간 / {roleTotals.totalMentorScholarship.toLocaleString()}원
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadMentorOnlyCsv}
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>품의 엑셀</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
+                      <th className="p-3.5">학번</th>
+                      <th className="p-3.5">이름</th>
+                      <th className="p-3.5">학과</th>
+                      <th className="p-3.5">담당 멘토링 프로그램</th>
+                      <th className="p-3.5">학기</th>
+                      <th className="p-3.5 text-center">진행 회차</th>
+                      <th className="p-3.5 text-center">인정 활동시간</th>
+                      <th className="p-3.5 text-center">출석률</th>
+                      <th className="p-3.5 text-right text-blue-900 font-bold">지급 장학금 (원)</th>
+                      <th className="p-3.5">입금 은행</th>
+                      <th className="p-3.5">계좌번호</th>
+                      <th className="p-3.5 text-center">상태</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {mentorSummaries.length === 0 ? (
+                      <tr>
+                        <td colSpan={12} className="p-8 text-center text-slate-400">
+                          조회된 멘토 데이터가 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      mentorSummaries.map((st, idx) => (
+                        <tr key={idx} className="hover:bg-blue-50/40 transition-colors">
+                          <td className="p-3.5 font-mono text-slate-500">{st.studentId}</td>
+                          <td className="p-3.5 font-bold text-slate-900">{st.name}</td>
+                          <td className="p-3.5">{st.department}</td>
+                          <td className="p-3.5 font-medium text-slate-800">{st.mentoringTitle}</td>
+                          <td className="p-3.5 text-slate-500">{st.semester}학기</td>
+                          <td className="p-3.5 text-center text-slate-600 font-medium">
+                            {st.attendedSessions} / {st.totalSessions}회
+                          </td>
+                          <td className="p-3.5 text-center font-bold text-slate-900">
+                            {st.totalHours}시간
+                          </td>
+                          <td className="p-3.5 text-center">
+                            <span className="font-bold text-blue-700">{st.attendanceRate}%</span>
+                          </td>
+                          <td className="p-3.5 text-right font-extrabold text-blue-700">
+                            {st.totalSettlement.toLocaleString()}원
+                          </td>
+                          <td className="p-3.5 font-semibold text-slate-700">{st.bankName || '부산은행'}</td>
+                          <td className="p-3.5 font-mono text-xs text-slate-600">{st.accountNumber}</td>
+                          <td className="p-3.5 text-center">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                              지급적격
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2: 참여 멘티 비교과 마일리지(웨일비) 적립 명단 */}
+          {(userRoleFilter === 'ALL' || userRoleFilter === 'MENTEE') && (
+            <div className="bg-white rounded-2xl border border-indigo-200/80 shadow-xs overflow-hidden">
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-50/80 via-white to-purple-50/30 border-b border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    멘티
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900">
+                        참여 멘티 명단 (비교과 마일리지·웨일비 연계 대상)
+                      </h4>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        {menteeSummaries.length}명
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      부여 기준: 회차당 10점(P) 적립 · 부경대학교 비교과 통합플랫폼(Whalebee) 일괄 등록 서식
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-start sm:self-auto">
+                  <div className="text-right text-xs">
+                    <span className="text-slate-400 block text-[11px]">총 학습시간 / 마일리지</span>
+                    <strong className="text-indigo-900 font-extrabold">
+                      {roleTotals.totalMenteeHours}시간 / {roleTotals.totalMenteeMileage}P
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadMenteeOnlyCsv}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>마일리지 엑셀</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
+                      <th className="p-3.5">학번</th>
+                      <th className="p-3.5">이름</th>
+                      <th className="p-3.5">학과</th>
+                      <th className="p-3.5">소속 멘토링 프로그램</th>
+                      <th className="p-3.5">학기</th>
+                      <th className="p-3.5 text-center">출석 회차</th>
+                      <th className="p-3.5 text-center">누적 학습시간</th>
+                      <th className="p-3.5 text-center">출석률</th>
+                      <th className="p-3.5 text-right text-indigo-900 font-bold">웨일비 마일리지 (P)</th>
+                      <th className="p-3.5">입금 은행</th>
+                      <th className="p-3.5">계좌번호</th>
+                      <th className="p-3.5 text-center">수료 판정</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {menteeSummaries.length === 0 ? (
+                      <tr>
+                        <td colSpan={12} className="p-8 text-center text-slate-400">
+                          조회된 멘티 데이터가 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      menteeSummaries.map((st, idx) => (
+                        <tr key={idx} className="hover:bg-indigo-50/40 transition-colors">
+                          <td className="p-3.5 font-mono text-slate-500">{st.studentId}</td>
+                          <td className="p-3.5 font-bold text-slate-900">{st.name}</td>
+                          <td className="p-3.5">{st.department}</td>
+                          <td className="p-3.5 font-medium text-slate-800">{st.mentoringTitle}</td>
+                          <td className="p-3.5 text-slate-500">{st.semester}학기</td>
+                          <td className="p-3.5 text-center text-slate-600 font-medium">
+                            {st.attendedSessions} / {st.totalSessions}회
+                          </td>
+                          <td className="p-3.5 text-center font-bold text-slate-900">
+                            {st.totalHours}시간
+                          </td>
+                          <td className="p-3.5 text-center">
+                            <span
+                              className={`font-bold ${
+                                st.attendanceRate >= 80
+                                  ? 'text-emerald-600'
+                                  : st.attendanceRate >= 60
+                                  ? 'text-amber-600'
+                                  : 'text-rose-500'
+                              }`}
+                            >
+                              {st.attendanceRate}%
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right font-extrabold text-indigo-700">
+                            {st.totalSettlement}P
+                          </td>
+                          <td className="p-3.5 font-semibold text-slate-700">{st.bankName || '부산은행'}</td>
+                          <td className="p-3.5 font-mono text-xs text-slate-600">{st.accountNumber}</td>
+                          <td className="p-3.5 text-center">
+                            {st.attendanceRate >= 80 ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                80% 수료
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                                이수중
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -690,6 +961,68 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Table Container */}
+          {settlementSubTab === 'SUMMARY' && (
+            <div className="bg-slate-50/70 px-5 py-2 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-500 mr-1">대상 구분:</span>
+                <button
+                  type="button"
+                  onClick={() => setSettlementRoleFilter('ALL')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    settlementRoleFilter === 'ALL'
+                      ? 'bg-emerald-700 text-white shadow-2xs font-bold'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                  }`}
+                >
+                  전체 ({studentSummaries.length}명)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettlementRoleFilter('MENTOR')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    settlementRoleFilter === 'MENTOR'
+                      ? 'bg-blue-600 text-white shadow-2xs font-bold'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                  }`}
+                >
+                  멘토 장학금 ({mentorSummaries.length}명 · {roleTotals.totalMentorScholarship.toLocaleString()}원)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettlementRoleFilter('MENTEE')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    settlementRoleFilter === 'MENTEE'
+                      ? 'bg-indigo-600 text-white shadow-2xs font-bold'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                  }`}
+                >
+                  멘티 마일리지 ({menteeSummaries.length}명 · {roleTotals.totalMenteeMileage}P)
+                </button>
+              </div>
+
+              {settlementRoleFilter === 'MENTOR' && (
+                <button
+                  type="button"
+                  onClick={handleDownloadMentorOnlyCsv}
+                  className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs flex items-center gap-1 border border-blue-200"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>멘토 전용 품의 엑셀</span>
+                </button>
+              )}
+              {settlementRoleFilter === 'MENTEE' && (
+                <button
+                  type="button"
+                  onClick={handleDownloadMenteeOnlyCsv}
+                  className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1 border border-indigo-200"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>멘티 전용 마일리지 엑셀</span>
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="overflow-x-auto max-h-96">
             {settlementSubTab === 'SUMMARY' ? (
               <table className="w-full text-left border-collapse text-xs">
@@ -711,14 +1044,14 @@ export const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-600">
-                  {studentSummaries.length === 0 ? (
+                  {filterStudentSummariesByRole(studentSummaries, settlementRoleFilter).length === 0 ? (
                     <tr>
                       <td colSpan={13} className="p-8 text-center text-slate-400">
-                        조회된 학생 정산 데이터가 없습니다.
+                        선택된 대상 구분에 해당하는 데이터가 없습니다.
                       </td>
                     </tr>
                   ) : (
-                    studentSummaries.map((s, idx) => (
+                    filterStudentSummariesByRole(studentSummaries, settlementRoleFilter).map((s, idx) => (
                       <tr key={idx} className="hover:bg-slate-50">
                         <td className="p-3 font-mono font-semibold text-slate-900">{s.studentId}</td>
                         <td className="p-3 font-bold text-slate-900">{s.name}</td>

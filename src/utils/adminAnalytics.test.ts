@@ -5,6 +5,8 @@ import {
   filterPrograms,
   getStudentParticipations,
   generateSettlementRecords,
+  filterStudentSummariesByRole,
+  calculateRoleTotals,
 } from './adminAnalytics';
 import { WeeklyActivityLog, MentoringProgram, AdminSettlementRecord } from '../types';
 
@@ -261,6 +263,28 @@ describe('Admin Analytics & Multi-view Utilities (TDD Red -> Green)', () => {
       status: 'COMPLETED',
     });
     expect(allCompleted.length).toBe(1);
+  });
+
+  it('should filter student summaries by role correctly (MENTOR vs MENTEE)', () => {
+    const summaries = generateStudentSummaries(dummyLogs, dummyPrograms, '2026-1');
+    const mentors = filterStudentSummariesByRole(summaries, 'MENTOR');
+    const mentees = filterStudentSummariesByRole(summaries, 'MENTEE');
+    const all = filterStudentSummariesByRole(summaries, 'ALL');
+
+    expect(mentors.every((s) => s.role === 'MENTOR')).toBe(true);
+    expect(mentees.every((s) => s.role === 'MENTEE')).toBe(true);
+    expect(all.length).toBe(mentors.length + mentees.length);
+  });
+
+  it('should calculate role-specific totals accurately for administrative proposal', () => {
+    const summaries = generateStudentSummaries(dummyLogs, dummyPrograms, '2026-1', 15000);
+    const totals = calculateRoleTotals(summaries);
+
+    expect(totals.mentorCount).toBeGreaterThan(0);
+    expect(totals.menteeCount).toBeGreaterThan(0);
+    expect(totals.totalMentorHours).toBeGreaterThan(0);
+    expect(totals.totalMentorScholarship).toBe(totals.totalMentorHours * 15000);
+    expect(totals.totalMenteeMileage).toBeGreaterThan(0);
   });
 });
 
