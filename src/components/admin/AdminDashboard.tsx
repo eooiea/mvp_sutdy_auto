@@ -13,7 +13,6 @@ import {
   generateStudentSummaries,
   filterSettlementRecords,
   filterPrograms,
-  filterStudentSummariesByRole,
   calculateRoleTotals,
 } from '../../utils/adminAnalytics';
 import { calculateSubmissionRate } from '../../utils/statusTransition';
@@ -62,9 +61,7 @@ export const AdminDashboard: React.FC = () => {
 
   const [selectedLog, setSelectedLog] = useState<WeeklyActivityLog | null>(null);
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
-  const [settlementSubTab, setSettlementSubTab] = useState<'SUMMARY' | 'LOGS'>('SUMMARY');
   const [userRoleFilter, setUserRoleFilter] = useState<'ALL' | 'MENTOR' | 'MENTEE'>('ALL');
-  const [settlementRoleFilter, setSettlementRoleFilter] = useState<'ALL' | 'MENTOR' | 'MENTEE'>('ALL');
 
   // Available semesters dynamically collected from data
   const availableSemesters = useMemo(() => {
@@ -112,11 +109,8 @@ export const AdminDashboard: React.FC = () => {
     });
   }, [activityLogs, programs, selectedSemester, searchQuery]);
 
-  // Pending Applications
-  const pendingApplications = applications.filter((a) => {
-    const matchSem = selectedSemester === 'ALL' || a.semester === selectedSemester;
-    return matchSem && a.status === 'PENDING';
-  });
+  // Pending Applications across the platform awaiting admin review
+  const pendingApplications = applications.filter((a) => a.status === 'PENDING');
 
   const totals = calculateSettlementTotal(filteredSettlementRecords);
 
@@ -366,7 +360,7 @@ export const AdminDashboard: React.FC = () => {
             }`}
           >
             <Layers className="w-4 h-4 shrink-0" />
-            <span className="truncate">프로젝트(팀)별 현황 ({filteredPrograms.length})</span>
+            <span className="truncate">프로젝트(팀)별 현황</span>
           </button>
 
           <button
@@ -379,7 +373,7 @@ export const AdminDashboard: React.FC = () => {
             }`}
           >
             <UserCheck className="w-4 h-4 shrink-0" />
-            <span className="truncate">학생(사용자)별 활동 이력 ({studentSummaries.length}명)</span>
+            <span className="truncate">학생(사용자)별 활동 이력</span>
           </button>
 
           <button
@@ -392,7 +386,7 @@ export const AdminDashboard: React.FC = () => {
             }`}
           >
             <FileSpreadsheet className="w-4 h-4 shrink-0" />
-            <span className="truncate">기간별 정산·품의 추출 ({filteredSettlementRecords.length}건)</span>
+            <span className="truncate">기간별 정산·품의 추출</span>
           </button>
 
           <button
@@ -897,8 +891,7 @@ export const AdminDashboard: React.FC = () => {
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
                 <span>
-                  {selectedSemester === 'ALL' ? '전체 학기' : `${selectedSemester}학기`} 정산 품의
-                  데이터 ({filteredSettlementRecords.length}건)
+                  {selectedSemester === 'ALL' ? '전체 학기' : `${selectedSemester}학기`} 정산 및 감사 증빙 데이터
                 </span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -926,254 +919,79 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Sub Tab Switcher (Option A: 2원화 실시간 뷰 전환) */}
-          <div className="bg-slate-50 px-5 py-2.5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div className="inline-flex items-center p-1 bg-slate-200/60 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setSettlementSubTab('SUMMARY')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  settlementSubTab === 'SUMMARY'
-                    ? 'bg-white text-emerald-800 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                1. 학생별 최종 정산 총괄표 ({studentSummaries.length}명)
-              </button>
-              <button
-                type="button"
-                onClick={() => setSettlementSubTab('LOGS')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  settlementSubTab === 'LOGS'
-                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                2. 주차별 감사 상세내역 ({filteredSettlementRecords.length}건)
-              </button>
+          <div className="bg-slate-50 px-5 py-3 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-800">주차별 활동 및 출석 감사 증빙 로그</span>
+              <span className="text-[11px] text-slate-400">· 국비 및 SW중심대학 감사 증빙용</span>
             </div>
             <span className="text-[11px] text-slate-500 font-medium">
-              {settlementSubTab === 'SUMMARY'
-                ? '대학 행정·회계 지출결의(KORUS) 복사 및 엑셀 수식(=SUM) 즉시 계산 서식'
-                : 'IITP / SW중심대학 국비 감사 대비 주차별 증빙 로그 서식'}
+              대학 행정 회계 및 감사 대조를 위한 주차별 출석·활동시간 상세 내역입니다.
             </span>
           </div>
 
-          {/* Table Container */}
-          {settlementSubTab === 'SUMMARY' && (
-            <div className="bg-slate-50/70 px-5 py-2 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-slate-500 mr-1">대상 구분:</span>
-                <button
-                  type="button"
-                  onClick={() => setSettlementRoleFilter('ALL')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
-                    settlementRoleFilter === 'ALL'
-                      ? 'bg-emerald-700 text-white shadow-2xs font-bold'
-                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                  }`}
-                >
-                  전체 ({studentSummaries.length}명)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSettlementRoleFilter('MENTOR')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
-                    settlementRoleFilter === 'MENTOR'
-                      ? 'bg-blue-600 text-white shadow-2xs font-bold'
-                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                  }`}
-                >
-                  멘토 장학금 ({mentorSummaries.length}명 · {roleTotals.totalMentorScholarship.toLocaleString()}원)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSettlementRoleFilter('MENTEE')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
-                    settlementRoleFilter === 'MENTEE'
-                      ? 'bg-indigo-600 text-white shadow-2xs font-bold'
-                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                  }`}
-                >
-                  멘티 마일리지 ({menteeSummaries.length}명 · {roleTotals.totalMenteeMileage}P)
-                </button>
-              </div>
-
-              {settlementRoleFilter === 'MENTOR' && (
-                <button
-                  type="button"
-                  onClick={handleDownloadMentorOnlyCsv}
-                  className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs flex items-center gap-1 border border-blue-200"
-                >
-                  <Download className="w-3 h-3" />
-                  <span>멘토 전용 품의 엑셀</span>
-                </button>
-              )}
-              {settlementRoleFilter === 'MENTEE' && (
-                <button
-                  type="button"
-                  onClick={handleDownloadMenteeOnlyCsv}
-                  className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1 border border-indigo-200"
-                >
-                  <Download className="w-3 h-3" />
-                  <span>멘티 전용 마일리지 엑셀</span>
-                </button>
-              )}
-            </div>
-          )}
-
           <div className="overflow-x-auto">
-            {settlementSubTab === 'SUMMARY' ? (
-              <table className="w-full min-w-[850px] text-left border-collapse text-xs">
-                <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
+            <table className="w-full min-w-[850px] text-left border-collapse text-xs">
+              <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
+                <tr>
+                  <th className="p-3">학번</th>
+                  <th className="p-3">이름</th>
+                  <th className="p-3">학과</th>
+                  <th className="p-3">역할</th>
+                  <th className="p-3">멘토링팀명</th>
+                  <th className="p-3">학기</th>
+                  <th className="p-3">회차</th>
+                  <th className="p-3">활동일자</th>
+                  <th className="p-3">시간</th>
+                  <th className="p-3">출석</th>
+                  <th className="p-3 text-right">지급액/마일리지</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-600">
+                {filteredSettlementRecords.length === 0 ? (
                   <tr>
-                    <th className="p-3">학번</th>
-                    <th className="p-3">이름</th>
-                    <th className="p-3">학과</th>
-                    <th className="p-3">역할</th>
-                    <th className="p-3">멘토링팀명</th>
-                    <th className="p-3">학기</th>
-                    <th className="p-3 text-center">회차(출석/총)</th>
-                    <th className="p-3 text-center">출석률</th>
-                    <th className="p-3 text-right">총 인정시간</th>
-                    <th className="p-3 text-right">지급총액 / 마일리지</th>
-                    <th className="p-3 text-center">적격여부</th>
+                    <td colSpan={11} className="p-8 text-center text-slate-400">
+                      조회된 감사 상세 내역이 없습니다.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-600">
-                  {filterStudentSummariesByRole(studentSummaries, settlementRoleFilter).length === 0 ? (
-                    <tr>
-                      <td colSpan={11} className="p-8 text-center text-slate-400">
-                        선택된 대상 구분에 해당하는 데이터가 없습니다.
+                ) : (
+                  filteredSettlementRecords.map((r, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="p-3 font-mono">{r.studentId}</td>
+                      <td className="p-3 font-bold text-slate-800">{r.name}</td>
+                      <td className="p-3">{r.department}</td>
+                      <td className="p-3">
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            r.role === 'MENTOR'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {r.role === 'MENTOR' ? '멘토' : '멘티'}
+                        </span>
+                      </td>
+                      <td className="p-3 font-medium text-slate-800">{r.mentoringTitle}</td>
+                      <td className="p-3 text-slate-500">{r.semester}학기</td>
+                      <td className="p-3">{r.week}주차</td>
+                      <td className="p-3 text-slate-400">{r.activityDate}</td>
+                      <td className="p-3">{r.durationHours}h</td>
+                      <td className="p-3">
+                        {r.attended ? (
+                          <span className="text-emerald-600 font-semibold">참석</span>
+                        ) : (
+                          <span className="text-rose-500 font-semibold">결석</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-900">
+                        {r.role === 'MENTOR'
+                          ? `${r.settlementAmount.toLocaleString()}원`
+                          : `${r.settlementAmount}점`}
                       </td>
                     </tr>
-                  ) : (
-                    filterStudentSummariesByRole(studentSummaries, settlementRoleFilter).map((s, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="p-3 font-mono font-semibold text-slate-900">{s.studentId}</td>
-                        <td className="p-3 font-bold text-slate-900">{s.name}</td>
-                        <td className="p-3">{s.department}</td>
-                        <td className="p-3">
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              s.role === 'MENTOR'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            {s.role === 'MENTOR' ? '멘토' : '멘티'}
-                          </span>
-                        </td>
-                        <td className="p-3 font-medium text-slate-800">{s.mentoringTitle}</td>
-                        <td className="p-3 text-slate-500">{s.semester || '2026-1'}학기</td>
-                        <td className="p-3 text-center">
-                          {s.attendedSessions} / {s.totalSessions}회
-                        </td>
-                        <td className="p-3 text-center font-semibold">
-                          <span
-                            className={
-                              s.attendanceRate >= 80
-                                ? 'text-emerald-600'
-                                : s.attendanceRate >= 60
-                                ? 'text-amber-600'
-                                : 'text-rose-500'
-                            }
-                          >
-                            {s.attendanceRate}%
-                          </span>
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-slate-900">
-                          {s.totalHours}시간
-                        </td>
-                        <td className="p-3 text-right font-bold text-emerald-700">
-                          {s.role === 'MENTOR'
-                            ? `${s.totalSettlement.toLocaleString()}원`
-                            : `${s.totalSettlement}P`}
-                        </td>
-                        <td className="p-3 text-center">
-                          {s.role === 'MENTOR' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
-                              지급적격
-                            </span>
-                          ) : s.attendanceRate >= 80 ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                              80% 수료
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
-                              이수중
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            ) : (
-              <table className="w-full min-w-[850px] text-left border-collapse text-xs">
-                <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
-                  <tr>
-                    <th className="p-3">학번</th>
-                    <th className="p-3">이름</th>
-                    <th className="p-3">학과</th>
-                    <th className="p-3">역할</th>
-                    <th className="p-3">멘토링팀명</th>
-                    <th className="p-3">학기</th>
-                    <th className="p-3">회차</th>
-                    <th className="p-3">활동일자</th>
-                    <th className="p-3">시간</th>
-                    <th className="p-3">출석</th>
-                    <th className="p-3 text-right">지급액/마일리지</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-600">
-                  {filteredSettlementRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan={11} className="p-8 text-center text-slate-400">
-                        조회된 감사 상세 내역이 없습니다.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSettlementRecords.map((r, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="p-3 font-mono">{r.studentId}</td>
-                        <td className="p-3 font-bold text-slate-800">{r.name}</td>
-                        <td className="p-3">{r.department}</td>
-                        <td className="p-3">
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              r.role === 'MENTOR'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            {r.role === 'MENTOR' ? '멘토' : '멘티'}
-                          </span>
-                        </td>
-                        <td className="p-3 font-medium text-slate-800">{r.mentoringTitle}</td>
-                        <td className="p-3 text-slate-500">{r.semester}학기</td>
-                        <td className="p-3">{r.week}주차</td>
-                        <td className="p-3 text-slate-400">{r.activityDate}</td>
-                        <td className="p-3">{r.durationHours}h</td>
-                        <td className="p-3">
-                          {r.attended ? (
-                            <span className="text-emerald-600 font-semibold">참석</span>
-                          ) : (
-                            <span className="text-rose-500 font-semibold">결석</span>
-                          )}
-                        </td>
-                        <td className="p-3 text-right font-bold text-slate-900">
-                          {r.role === 'MENTOR'
-                            ? `${r.settlementAmount.toLocaleString()}원`
-                            : `${r.settlementAmount}점`}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            )}
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

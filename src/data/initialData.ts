@@ -430,19 +430,19 @@ export const INITIAL_PROGRAMS: MentoringProgram[] = [
 export const INITIAL_APPLICATIONS: MenteeApplication[] = [
   {
     id: 'app-01',
-    mentoringId: 'nan-study-2025',
+    mentoringId: 'pknu-algo-2026',
     applicantName: '강민우',
     studentId: '20261023',
     department: '언론정보전공',
     grade: 1,
     phone: '010-8912-3456',
     email: 'minwoo26@pknu.ac.kr',
-    motivation: '비전공자이지만 코딩 기초를 선배님께 배우고 싶어 새내기 첫걸음 멘토링에 지원했습니다.',
+    motivation: '비전공자이지만 코딩 기초를 선배님께 배우고 싶어 알고리즘 멘토링에 지원했습니다.',
     bankName: '부산은행',
     accountNumber: '112-2201-9988-12',
     status: 'PENDING',
     appliedAt: '2026-11-04 14:20',
-    semester: '2025-1',
+    semester: '2026-1',
   },
   {
     id: 'app-02',

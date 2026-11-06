@@ -72,5 +72,35 @@ describe('Status Transitions & Calculation (TDD Red -> Green)', () => {
     expect(calculateSubmissionRate(0, 0)).toBe(0);
     expect(calculateSubmissionRate(3, 3)).toBe(100);
   });
+
+  it('dynamically tracks pending applications count from initial 4 down to 0 upon approval', () => {
+    let apps: MenteeApplication[] = [
+      { ...dummyApp, id: 'app-01', status: 'PENDING' },
+      { ...dummyApp, id: 'app-02', status: 'PENDING' },
+      { ...dummyApp, id: 'app-03', status: 'PENDING' },
+      { ...dummyApp, id: 'app-04', status: 'PENDING' },
+    ];
+
+    expect(apps.filter((a) => a.status === 'PENDING').length).toBe(4);
+
+    // Approve app-01
+    const res1 = updateApplicationStatus(dummyProgram, apps[0], 'APPROVED');
+    apps = apps.map((a) => (a.id === 'app-01' ? res1.updatedApplication : a));
+    expect(apps.filter((a) => a.status === 'PENDING').length).toBe(3);
+
+    // Reject app-02
+    const res2 = updateApplicationStatus(dummyProgram, apps[1], 'REJECTED');
+    apps = apps.map((a) => (a.id === 'app-02' ? res2.updatedApplication : a));
+    expect(apps.filter((a) => a.status === 'PENDING').length).toBe(2);
+
+    // Approve app-03 and app-04
+    const res3 = updateApplicationStatus(dummyProgram, apps[2], 'APPROVED');
+    apps = apps.map((a) => (a.id === 'app-03' ? res3.updatedApplication : a));
+    const res4 = updateApplicationStatus(dummyProgram, apps[3], 'APPROVED');
+    apps = apps.map((a) => (a.id === 'app-04' ? res4.updatedApplication : a));
+
+    // Fully approved / processed -> 0 pending
+    expect(apps.filter((a) => a.status === 'PENDING').length).toBe(0);
+  });
 });
 

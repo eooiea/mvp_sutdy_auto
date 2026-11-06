@@ -54,11 +54,11 @@ interface MentoringContextType {
 const MentoringContext = createContext<MentoringContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  PROGRAMS: 'swic_mentoring_programs_v8',
-  APPLICATIONS: 'swic_mentoring_applications_v8',
-  LOGS: 'swic_mentoring_logs_v8',
-  ROLE: 'swic_mentoring_role_v8',
-  HOURLY_RATE: 'swic_mentoring_rate_v8',
+  PROGRAMS: 'swic_mentoring_programs_v9',
+  APPLICATIONS: 'swic_mentoring_applications_v9',
+  LOGS: 'swic_mentoring_logs_v9',
+  ROLE: 'swic_mentoring_role_v9',
+  HOURLY_RATE: 'swic_mentoring_rate_v9',
 };
 
 export const MentoringProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
