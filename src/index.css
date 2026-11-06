@@ -5,6 +5,12 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 }
 

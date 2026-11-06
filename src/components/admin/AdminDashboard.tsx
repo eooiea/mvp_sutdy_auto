@@ -354,56 +354,60 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 View Tabs (체계적 관점 전환) */}
-        <div className="flex items-center gap-2 pt-3 border-t border-slate-100 overflow-x-auto scrollbar-none">
+        {/* 4 View Tabs (정밀 균등 분할 그리드 & 레이아웃 안정화) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 pt-3 border-t border-slate-100">
           <button
+            type="button"
             onClick={() => setAdminViewMode('BY_PROJECT')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-11 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full text-center ${
               adminViewMode === 'BY_PROJECT'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>프로젝트(팀)별 현황 ({filteredPrograms.length})</span>
+            <Layers className="w-4 h-4 shrink-0" />
+            <span className="truncate">프로젝트(팀)별 현황 ({filteredPrograms.length})</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAdminViewMode('BY_USER')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-11 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full text-center ${
               adminViewMode === 'BY_USER'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
             }`}
           >
-            <UserCheck className="w-4 h-4" />
-            <span>학생(사용자)별 활동 이력 ({studentSummaries.length}명)</span>
+            <UserCheck className="w-4 h-4 shrink-0" />
+            <span className="truncate">학생(사용자)별 활동 이력 ({studentSummaries.length}명)</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAdminViewMode('BY_SETTLEMENT')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-11 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full text-center ${
               adminViewMode === 'BY_SETTLEMENT'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
             }`}
           >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>기간별 정산·품의 추출 ({filteredSettlementRecords.length}건)</span>
+            <FileSpreadsheet className="w-4 h-4 shrink-0" />
+            <span className="truncate">기간별 정산·품의 추출 ({filteredSettlementRecords.length}건)</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAdminViewMode('BY_APPLICATION')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-11 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full text-center relative ${
               adminViewMode === 'BY_APPLICATION'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>신규 신청서 승인 ({pendingApplications.length}건 대기)</span>
+            <Users className="w-4 h-4 shrink-0" />
+            <span className="truncate">신규 신청서 승인 ({pendingApplications.length}건 대기)</span>
             {pendingApplications.length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-0.5" />
+              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
             )}
           </button>
         </div>
@@ -411,7 +415,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* VIEW 1: 프로젝트(팀)별 조회 */}
       {adminViewMode === 'BY_PROJECT' && (
-        <div className="space-y-6">
+        <div className="space-y-6 min-h-[460px]">
           {/* Projects Table with Additional Recruitment Toggle */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -426,7 +430,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full min-w-[850px] text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
                     <th className="p-3.5">멘토링 팀명 (학기)</th>
@@ -587,7 +591,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* VIEW 2: 사용자(학생)별 활동·출석 이력 (멘토/멘티 완벽 분리 뷰) */}
       {adminViewMode === 'BY_USER' && (
-        <div className="space-y-5">
+        <div className="space-y-5 min-h-[460px]">
           {/* Top Control & Role Segmented Tabs */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -712,7 +716,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <table className="w-full min-w-[920px] text-left border-collapse text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
                       <th className="p-3.5">학번</th>
@@ -815,7 +819,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <table className="w-full min-w-[920px] text-left border-collapse text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
                       <th className="p-3.5">학번</th>
@@ -891,7 +895,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* VIEW 3: 기간별 정산·품의 엑셀 추출 */}
       {adminViewMode === 'BY_SETTLEMENT' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[460px]">
           <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
@@ -1022,9 +1026,9 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          <div className="overflow-x-auto max-h-96">
+          <div className="overflow-x-auto">
             {settlementSubTab === 'SUMMARY' ? (
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full min-w-[950px] text-left border-collapse text-xs">
                 <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
                   <tr>
                     <th className="p-3">학번</th>
@@ -1119,7 +1123,7 @@ export const AdminDashboard: React.FC = () => {
                 </tbody>
               </table>
             ) : (
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full min-w-[950px] text-left border-collapse text-xs">
                 <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
                   <tr>
                     <th className="p-3">학번</th>
@@ -1196,7 +1200,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* VIEW 4: 신규 신청서 승인/반려 관리 */}
       {adminViewMode === 'BY_APPLICATION' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[460px]">
           <div className="p-5 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
@@ -1215,7 +1219,7 @@ export const AdminDashboard: React.FC = () => {
 
           <div className="overflow-x-auto">
             {applications.length > 0 ? (
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full min-w-[850px] text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
                     <th className="p-3.5">신청자 정보</th>
