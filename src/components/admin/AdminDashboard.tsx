@@ -180,11 +180,11 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner with Semester Indicator */}
-      <div className="bg-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-slate-800">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+      {/* Top Banner with Semester Indicator (공고 배너와 완전 동일한 크기/패딩) */}
+      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 min-h-[190px] flex flex-col justify-center">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-2 mb-3">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
                 행정실 통합 관제 포털
               </span>
@@ -195,7 +195,7 @@ export const AdminDashboard: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               멘토링 통합 관리 대시보드
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-300">
+            <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
               학기 기간별, 프로젝트별, 참여 학생(사용자)별로 데이터를 체계적으로 필터링하고 공문 정산용 엑셀을 1클릭 추출합니다.
             </p>
           </div>

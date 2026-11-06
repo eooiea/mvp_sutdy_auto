@@ -103,8 +103,8 @@ export const MentoringList: React.FC<MentoringListProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Hero Banner */}
-      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
+      {/* Hero Banner (기준 공고 배너) */}
+      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 min-h-[190px] flex flex-col justify-center">
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 mb-3">
             <GraduationCap className="w-3.5 h-3.5" />

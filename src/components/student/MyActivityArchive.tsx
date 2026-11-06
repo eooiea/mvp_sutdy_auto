@@ -83,18 +83,18 @@ export const MyActivityArchive: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Demo Student Switcher */}
-      <div className="bg-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-slate-800">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 mb-2">
+      {/* Top Banner & Demo Student Switcher (공고 배너와 완전 동일한 크기/패딩) */}
+      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 min-h-[190px] flex flex-col justify-center">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 mb-3">
               <Award className="w-3.5 h-3.5" />
               <span>학생 개인별 포트폴리오 및 공식 증빙 보관함</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               나의 멘토링 활동 이력 및 증빙
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-300">
+            <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
               멘토 및 멘티로 참여한 모든 스터디의 주차별 일지와 활동시간이 기록되며, 장학금 신청이나 취업 포트폴리오용 활동 확인서를 즉시 발급받을 수 있습니다.
             </p>
           </div>

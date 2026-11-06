@@ -79,18 +79,18 @@ export const AdminCompletedArchive: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-slate-800">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 mb-2">
+      {/* Header Banner (공고 배너와 완전 동일한 크기/패딩) */}
+      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 min-h-[190px] flex flex-col justify-center">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 mb-3">
               <Award className="w-3.5 h-3.5" />
               <span>학기별 수료 완료 사업단 공식 아카이브</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               학기별 완료 멘토링 및 실적 보관소
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-300">
+            <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
               종료된 지난 학기의 멘토링 결과보고서, 출석부, 최종 장학금 지급 실적을 보관하고 열람합니다.
             </p>
           </div>
