@@ -98,23 +98,24 @@ describe('Settlement CSV Export (TDD Red -> Green)', () => {
     expect(csv.startsWith('\uFEFF')).toBe(true);
   });
 
-  it('should generate official administrative column headers with pure number label indicators', () => {
+  it('should generate official administrative column headers with pure number label indicators and without bank/account info', () => {
     const csv = generateSettlementCsv(sampleRecords);
     const lines = csv.split('\n');
     const headerLine = lines[0].replace('\uFEFF', '');
     expect(headerLine).toBe(
-      '학번,이름,학과,역할,멘토링팀명,학기,회차(주차),활동일자,활동시간(h),참석여부,지급예정액(원)/마일리지(P),입금은행,계좌번호,승인상태'
+      '학번,이름,학과,역할,멘토링팀명,학기,회차(주차),활동일자,활동시간(h),참석여부,지급예정액(원)/마일리지(P),승인상태'
     );
   });
 
-  it('should format data rows correctly with pure numbers for duration and amount to enable Excel =SUM formulas', () => {
+  it('should format data rows correctly with pure numbers for duration and amount and without bank info', () => {
     const csv = generateSettlementCsv(sampleRecords);
     const lines = csv.split('\n');
     expect(lines.length).toBe(4);
-    // Notice: pure numbers '2' and '30000' (no '시간', '원' text suffix in numeric cells)
+    // Notice: pure numbers '2' and '30000' and no bank/account numbers
     expect(lines[1]).toBe(
-      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4주차,2026-04-10,2,참석,30000,부산은행,112-2104-5678-01,승인'
+      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4주차,2026-04-10,2,참석,30000,승인'
     );
+    expect(lines[1]).not.toContain('은행');
   });
 
   it('should calculate total mentor scholarship payout and total mentee mileage based on 15,000 KRW rate', () => {
@@ -123,18 +124,19 @@ describe('Settlement CSV Export (TDD Red -> Green)', () => {
     expect(totals.totalMenteeMileage).toBe(10);
   });
 
-  it('should generate student summary CSV (1 row per student) with pure numbers for official accounting disbursement', () => {
+  it('should generate student summary CSV (1 row per student) with pure numbers and without bank info for privacy protection', () => {
     const csv = generateStudentSummaryCsv(sampleSummaries);
     expect(csv.startsWith('\uFEFF')).toBe(true);
     const lines = csv.split('\n');
     expect(lines[0].replace('\uFEFF', '')).toBe(
-      '학번,이름,학과,역할,멘토링팀명,학기,총회차,출석회차,출석률(%),총인정시간(h),지급총액(원)/마일리지(P),입금은행,계좌번호,정산적격여부'
+      '학번,이름,학과,역할,멘토링팀명,학기,총회차,출석회차,출석률(%),총인정시간(h),지급총액(원)/마일리지(P),정산적격여부'
     );
     expect(lines.length).toBe(3);
-    // Row 1: 1 student 1 row, pure numbers for calculation
+    // Row 1: 1 student 1 row, pure numbers for calculation, no bank/account numbers
     expect(lines[1]).toBe(
-      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4,4,100,8,120000,부산은행,112-2104-5678-01,지급적격'
+      '20241234,이명준,컴퓨터·인공지능공학부,멘토,PKNU 알고리즘 중급/실전,2026-1,4,4,100,8,120000,지급적격'
     );
+    expect(lines[1]).not.toContain('은행');
   });
 
   it('should generate mentee mileage CSV without bank and account numbers for Education Innovation Institute', () => {
@@ -153,16 +155,17 @@ describe('Settlement CSV Export (TDD Red -> Green)', () => {
     expect(lines[1]).not.toContain('123456');
   });
 
-  it('should generate mentor disbursement CSV with bank and account numbers for KORUS accounting proposal', () => {
+  it('should generate mentor disbursement CSV with amounts and without bank info for privacy safety', () => {
     const mentors = sampleSummaries.filter((s) => s.role === 'MENTOR');
     const csv = generateMentorDisbursementCsv(mentors);
     expect(csv.startsWith('\uFEFF')).toBe(true);
     const lines = csv.split('\n');
     expect(lines[0].replace('\uFEFF', '')).toBe(
-      '학번,이름,학과,담당멘토링프로그램,학기,진행회차,인정활동시간(h),지급총액(원),입금은행,계좌번호,지급적격여부'
+      '학번,이름,학과,담당멘토링프로그램,학기,진행회차,인정활동시간(h),지급총액(원),지급적격여부'
     );
     expect(lines[1]).toBe(
-      '20241234,이명준,컴퓨터·인공지능공학부,PKNU 알고리즘 중급/실전,2026-1,4,8,120000,부산은행,112-2104-5678-01,지급적격'
+      '20241234,이명준,컴퓨터·인공지능공학부,PKNU 알고리즘 중급/실전,2026-1,4,8,120000,지급적격'
     );
+    expect(lines[1]).not.toContain('은행');
   });
 });

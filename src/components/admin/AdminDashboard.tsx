@@ -205,7 +205,7 @@ export const AdminDashboard: React.FC = () => {
             <button
               onClick={handleDownloadSummaryCsv}
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2 transition-all"
-              title="회계 품의 및 은행 계좌 이체용 (1인 1행, 순수 숫자 계산 가능)"
+              title="회계 품의용 학생별 총괄표 (1인 1행, 순수 숫자 계산 가능, 개인정보 보호를 위해 계좌 제외)"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>회계 품의용 총괄표 (엑셀)</span>
@@ -716,7 +716,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[920px] text-left border-collapse text-xs sm:text-sm">
+                <table className="w-full min-w-[800px] text-left border-collapse text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs font-semibold">
                       <th className="p-3.5">학번</th>
@@ -728,15 +728,13 @@ export const AdminDashboard: React.FC = () => {
                       <th className="p-3.5 text-center">인정 활동시간</th>
                       <th className="p-3.5 text-center">출석률</th>
                       <th className="p-3.5 text-right text-blue-900 font-bold">지급 장학금 (원)</th>
-                      <th className="p-3.5">입금 은행</th>
-                      <th className="p-3.5">계좌번호</th>
                       <th className="p-3.5 text-center">상태</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
                     {mentorSummaries.length === 0 ? (
                       <tr>
-                        <td colSpan={12} className="p-8 text-center text-slate-400">
+                        <td colSpan={10} className="p-8 text-center text-slate-400">
                           조회된 멘토 데이터가 없습니다.
                         </td>
                       </tr>
@@ -760,8 +758,6 @@ export const AdminDashboard: React.FC = () => {
                           <td className="p-3.5 text-right font-extrabold text-blue-700">
                             {st.totalSettlement.toLocaleString()}원
                           </td>
-                          <td className="p-3.5 font-semibold text-slate-700">{st.bankName || '부산은행'}</td>
-                          <td className="p-3.5 font-mono text-xs text-slate-600">{st.accountNumber}</td>
                           <td className="p-3.5 text-center">
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
                               지급적격
@@ -914,7 +910,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleDownloadSummaryCsv}
                 className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors"
-                title="대학 회계 품의 및 은행 펌뱅킹 이체용 (1인 1행, 순수 숫자 계산 가능)"
+                title="대학 회계 품의용 (1인 1행, 순수 숫자 계산 가능, 개인정보 보호를 위해 계좌 제외)"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
                 <span>회계 품의용 총괄표 (.csv)</span>
@@ -1028,7 +1024,7 @@ export const AdminDashboard: React.FC = () => {
 
           <div className="overflow-x-auto">
             {settlementSubTab === 'SUMMARY' ? (
-              <table className="w-full min-w-[950px] text-left border-collapse text-xs">
+              <table className="w-full min-w-[850px] text-left border-collapse text-xs">
                 <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
                   <tr>
                     <th className="p-3">학번</th>
@@ -1041,15 +1037,13 @@ export const AdminDashboard: React.FC = () => {
                     <th className="p-3 text-center">출석률</th>
                     <th className="p-3 text-right">총 인정시간</th>
                     <th className="p-3 text-right">지급총액 / 마일리지</th>
-                    <th className="p-3">입금은행</th>
-                    <th className="p-3">계좌번호</th>
                     <th className="p-3 text-center">적격여부</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-600">
                   {filterStudentSummariesByRole(studentSummaries, settlementRoleFilter).length === 0 ? (
                     <tr>
-                      <td colSpan={13} className="p-8 text-center text-slate-400">
+                      <td colSpan={11} className="p-8 text-center text-slate-400">
                         선택된 대상 구분에 해당하는 데이터가 없습니다.
                       </td>
                     </tr>
@@ -1096,12 +1090,6 @@ export const AdminDashboard: React.FC = () => {
                             ? `${s.totalSettlement.toLocaleString()}원`
                             : `${s.totalSettlement}P`}
                         </td>
-                        <td className="p-3 font-semibold text-slate-700">
-                          {s.role === 'MENTOR' ? (s.bankName || '부산은행') : '-'}
-                        </td>
-                        <td className="p-3 font-mono text-[11px] text-slate-600">
-                          {s.role === 'MENTOR' ? (s.accountNumber || '112-2104-5678-01') : '-'}
-                        </td>
                         <td className="p-3 text-center">
                           {s.role === 'MENTOR' ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
@@ -1123,7 +1111,7 @@ export const AdminDashboard: React.FC = () => {
                 </tbody>
               </table>
             ) : (
-              <table className="w-full min-w-[950px] text-left border-collapse text-xs">
+              <table className="w-full min-w-[850px] text-left border-collapse text-xs">
                 <thead className="sticky top-0 bg-slate-100 text-slate-700 font-semibold shadow-2xs">
                   <tr>
                     <th className="p-3">학번</th>
@@ -1137,14 +1125,12 @@ export const AdminDashboard: React.FC = () => {
                     <th className="p-3">시간</th>
                     <th className="p-3">출석</th>
                     <th className="p-3 text-right">지급액/마일리지</th>
-                    <th className="p-3">입금은행</th>
-                    <th className="p-3">계좌번호</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-600">
                   {filteredSettlementRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={13} className="p-8 text-center text-slate-400">
+                      <td colSpan={11} className="p-8 text-center text-slate-400">
                         조회된 감사 상세 내역이 없습니다.
                       </td>
                     </tr>
@@ -1181,12 +1167,6 @@ export const AdminDashboard: React.FC = () => {
                           {r.role === 'MENTOR'
                             ? `${r.settlementAmount.toLocaleString()}원`
                             : `${r.settlementAmount}점`}
-                        </td>
-                        <td className="p-3 font-semibold text-slate-700">
-                          {r.role === 'MENTOR' ? (r.bankName || '부산은행') : '-'}
-                        </td>
-                        <td className="p-3 font-mono text-[11px] text-slate-600">
-                          {r.role === 'MENTOR' ? (r.accountNumber || '112-2104-5678-01') : '-'}
                         </td>
                       </tr>
                     ))

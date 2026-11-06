@@ -1,26 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { useMentoring } from '../../context/MentoringContext';
 import {
-  generateSettlementCsv,
-  generateStudentSummaryCsv,
-  downloadCsvFile,
-} from '../../utils/settlementExport';
-import { generateStudentSummaries } from '../../utils/adminAnalytics';
-import {
   Calendar,
   CheckCircle2,
   Users,
-  Download,
-  FileSpreadsheet,
   Clock,
   Award,
 } from 'lucide-react';
 
 export const AdminCompletedArchive: React.FC = () => {
-  const { programs, activityLogs, getSettlementRecords } = useMentoring();
+  const { programs, activityLogs } = useMentoring();
 
   const [selectedSemester, setSelectedSemester] = useState<string>('ALL');
-  const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
 
   // Available completed semesters dynamically collected
   const availableCompletedSemesters = useMemo(() => {
@@ -43,40 +34,6 @@ export const AdminCompletedArchive: React.FC = () => {
     });
   }, [programs, selectedSemester]);
 
-  const allSettlement = useMemo(() => getSettlementRecords(), [getSettlementRecords]);
-
-  // Aggregated student summaries for completed programs
-  const completedStudentSummaries = useMemo(() => {
-    return generateStudentSummaries(activityLogs, completedPrograms, selectedSemester);
-  }, [activityLogs, completedPrograms, selectedSemester]);
-
-  const handleDownloadCompletedSummaryCsv = () => {
-    const csvData = generateStudentSummaryCsv(completedStudentSummaries);
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const sem = selectedSemester === 'ALL' ? '전체완료학기' : `${selectedSemester}학기_최종`;
-    downloadCsvFile(csvData, `SWIC_회계품의_완료학기_정산총괄표_${sem}_${dateStr}.csv`);
-    setDownloadSuccessMessage(
-      `[회계 품의용 완료 총괄표] ${sem} 파일이 UTF-8 BOM(1인 1행, 순수 숫자 계산 가능)으로 다운로드되었습니다.`
-    );
-    setTimeout(() => setDownloadSuccessMessage(null), 4000);
-  };
-
-  const handleDownloadCompletedAuditCsv = () => {
-    const records = allSettlement.filter((r) => {
-      if (selectedSemester === 'ALL') {
-        return completedPrograms.some((p) => p.title === r.mentoringTitle);
-      }
-      return r.semester === selectedSemester;
-    });
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const sem = selectedSemester === 'ALL' ? '전체완료학기' : `${selectedSemester}학기_최종`;
-    downloadCsvFile(generateSettlementCsv(records), `SWIC_감사증빙_완료학기_상세내역_${sem}_${dateStr}.csv`);
-    setDownloadSuccessMessage(
-      `[감사 증빙용 완료 상세내역] ${sem} 파일이 UTF-8 BOM(국비 감사 대조용)으로 다운로드되었습니다.`
-    );
-    setTimeout(() => setDownloadSuccessMessage(null), 4000);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header Banner (공고 배너와 완전 동일한 크기/패딩) */}
@@ -91,38 +48,17 @@ export const AdminCompletedArchive: React.FC = () => {
               학기별 완료 멘토링 및 실적 보관소
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
-              종료된 지난 학기의 멘토링 결과보고서, 출석부, 최종 장학금 지급 실적을 보관하고 열람합니다.
+              종료된 지난 학기의 멘토링 결과보고서, 출석부, 최종 수료 실적을 영구 보관하고 열람합니다.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-            <button
-              onClick={handleDownloadCompletedSummaryCsv}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2 transition-all"
-              title="회계 품의 및 은행 계좌 이체용 (1인 1행, 순수 숫자 계산 가능)"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>회계 품의용 총괄표 (엑셀)</span>
-            </button>
-            <button
-              onClick={handleDownloadCompletedAuditCsv}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all"
-              title="국비 감사 증빙용 주차별 출석 및 활동 일지 상세내역"
-            >
-              <Download className="w-4 h-4" />
-              <span>감사 증빙용 상세내역 (엑셀)</span>
-            </button>
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <div className="px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700/70 text-slate-300 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>수료 포트폴리오 및 활동 증빙 영구 보존</span>
+            </div>
           </div>
         </div>
-
-        {downloadSuccessMessage && (
-          <div className="mt-3 p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-emerald-200 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              <strong>다운로드 성공:</strong> {downloadSuccessMessage}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Semester Filter Bar */}
@@ -213,33 +149,12 @@ export const AdminCompletedArchive: React.FC = () => {
                 )}
               </div>
 
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span className="text-slate-400">장학금 및 마일리지 정산 완료</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      const progSummaries = generateStudentSummaries(activityLogs, [prog], prog.semester);
-                      const csvData = generateStudentSummaryCsv(progSummaries);
-                      downloadCsvFile(csvData, `SWIC_회계품의_총괄표_${prog.title}_${prog.semester}.csv`);
-                    }}
-                    className="text-emerald-700 font-bold hover:underline flex items-center gap-1"
-                    title="1인 1행 회계 품의 서식 다운로드"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>품의총괄표</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      const records = allSettlement.filter((r) => r.mentoringTitle === prog.title);
-                      downloadCsvFile(generateSettlementCsv(records), `SWIC_감사증빙_상세_${prog.title}_${prog.semester}.csv`);
-                    }}
-                    className="text-slate-600 font-medium hover:underline flex items-center gap-1"
-                    title="주차별 감사 증빙 상세내역 다운로드"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>감사상세</span>
-                  </button>
-                </div>
+                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>활동 증빙 및 포트폴리오 보관</span>
+                </span>
               </div>
             </div>
           );

@@ -31,8 +31,6 @@ export function generateSettlementCsv(records: AdminSettlementRecord[]): string 
     '활동시간(h)',
     '참석여부',
     '지급예정액(원)/마일리지(P)',
-    '입금은행',
-    '계좌번호',
     '승인상태',
   ];
 
@@ -48,8 +46,6 @@ export function generateSettlementCsv(records: AdminSettlementRecord[]): string 
     escapeCsv(r.durationHours), // Pure number for Excel =SUM()
     escapeCsv(r.attended ? '참석' : '결석'),
     escapeCsv(r.settlementAmount), // Pure number for Excel =SUM()
-    escapeCsv(r.role === 'MENTOR' ? (r.bankName || '부산은행') : '-'),
-    escapeCsv(r.role === 'MENTOR' ? (r.accountNumber || '112-2104-5678-01') : '-'),
     escapeCsv(r.status === 'APPROVED' ? '승인' : '대기'),
   ]);
 
@@ -59,8 +55,9 @@ export function generateSettlementCsv(records: AdminSettlementRecord[]): string 
 }
 
 /**
- * Generates student-level aggregated summary CSV (회계 품의 및 은행 펌뱅킹 이체용 학생별 총괄표)
- * Format 2: 1 student per row, aggregated hours and payout, bank account, pure numbers for direct KORUS/Excel processing.
+ * Generates student-level aggregated summary CSV (회계 품의용 학생별 총괄표)
+ * Format 2: 1 student per row, aggregated hours and payout, pure numbers for direct KORUS/Excel processing.
+ * Excludes sensitive bank account numbers for student privacy.
  */
 export function generateStudentSummaryCsv(summaries: StudentUserSummary[]): string {
   const BOM = '\uFEFF';
@@ -76,8 +73,6 @@ export function generateStudentSummaryCsv(summaries: StudentUserSummary[]): stri
     '출석률(%)',
     '총인정시간(h)',
     '지급총액(원)/마일리지(P)',
-    '입금은행',
-    '계좌번호',
     '정산적격여부',
   ];
 
@@ -93,8 +88,6 @@ export function generateStudentSummaryCsv(summaries: StudentUserSummary[]): stri
     escapeCsv(s.attendanceRate),
     escapeCsv(s.totalHours), // Pure number for Excel =SUM()
     escapeCsv(s.totalSettlement), // Pure number for Excel =SUM()
-    escapeCsv(s.role === 'MENTOR' ? (s.bankName || '부산은행') : '-'),
-    escapeCsv(s.role === 'MENTOR' ? (s.accountNumber || '112-2104-5678-01') : '-'),
     escapeCsv(s.attendedSessions > 0 ? '지급적격' : '미달'),
   ]);
 
@@ -144,8 +137,8 @@ export function generateMenteeMileageCsv(mentees: StudentUserSummary[]): string 
 }
 
 /**
- * Generates mentor disbursement summary CSV for university financial accounting (KORUS 회계 품의 및 펌뱅킹 이체용)
- * Includes bank name and account number for cash stipend deposit with pure numbers.
+ * Generates mentor disbursement summary CSV for university financial accounting (KORUS 회계 품의용)
+ * Excludes bank name and account number for student privacy protection.
  */
 export function generateMentorDisbursementCsv(mentors: StudentUserSummary[]): string {
   const BOM = '\uFEFF';
@@ -158,8 +151,6 @@ export function generateMentorDisbursementCsv(mentors: StudentUserSummary[]): st
     '진행회차',
     '인정활동시간(h)',
     '지급총액(원)',
-    '입금은행',
-    '계좌번호',
     '지급적격여부',
   ];
 
@@ -172,8 +163,6 @@ export function generateMentorDisbursementCsv(mentors: StudentUserSummary[]): st
     escapeCsv(m.attendedSessions),
     escapeCsv(m.totalHours), // Pure number
     escapeCsv(m.totalSettlement), // Pure number
-    escapeCsv(m.bankName || '부산은행'),
-    escapeCsv(m.accountNumber || '112-2104-5678-01'),
     escapeCsv(m.attendedSessions > 0 ? '지급적격' : '미달'),
   ]);
 
