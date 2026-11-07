@@ -91,7 +91,7 @@ export const ExecutiveBriefingModal: React.FC<ExecutiveBriefingModalProps> = ({
                 <ul className="space-y-1.5 text-xs text-emerald-900">
                   <li>• <strong>모바일 1분 간편 신청</strong> (hwp 불필요)</li>
                   <li>• <strong>클릭 한 번으로 승인/매칭</strong> 완료</li>
-                  <li>• 현장에서 <strong>폰으로 사진 찍고 3줄 일지</strong> 즉시 제출</li>
+                  <li>• 현장에서 <strong>폰으로 사진 찍고 모바일 활동 일지</strong> 즉시 제출</li>
                   <li>• <strong>‘정산용 엑셀(CSV) 1클릭 다운로드’</strong>로 공문 즉시 기안</li>
                 </ul>
               </div>
